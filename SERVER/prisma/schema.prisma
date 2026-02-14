@@ -1,0 +1,533 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model action_logs {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  action      String    @db.VarChar
+  target_type String?   @db.VarChar
+  target_id   Int?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model api_cache {
+  id              Int      @id @default(autoincrement())
+  cache_key       String   @unique
+  platform_source String
+  data_type       String
+  cached_data     String
+  expires_at      DateTime
+  hit_count       Int      @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime
+
+  @@index([cache_key, expires_at])
+  @@index([platform_source, data_type])
+}
+
+model batches {
+  id               Int                @id @default(autoincrement())
+  batch_year       String             @unique @db.VarChar
+  student_profiles student_profiles[]
+  tests            tests[]
+}
+
+model blog_tags_mapping {
+  id      Int   @id @default(autoincrement())
+  blog_id Int
+  tag_id  Int
+  blogs   blogs @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+  tags    tags  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+}
+
+model blogs {
+  id                Int                 @id @default(autoincrement())
+  user_id           Int
+  title             String              @db.VarChar(255)
+  description       String?
+  up_vote           Int?                @default(0)
+  down_vote         Int?                @default(0)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  is_deleted        Boolean?            @default(false)
+  blog_tags_mapping blog_tags_mapping[]
+  users             users               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  comments          comments[]
+  vote_user_mapping vote_user_mapping[]
+}
+
+model colleges {
+  id    Int     @id @default(autoincrement())
+  name  String  @db.VarChar
+  tests tests[]
+  users users[]
+}
+
+model comments {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  blog_id    Int
+  comment    String
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  blogs      blogs     @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model daily_challenges {
+  id           Int      @id @default(autoincrement())
+  problem_id   Int
+  date         DateTime @unique @db.Date
+  created_at   DateTime @default(now())
+  set_by_admin Boolean  @default(false)
+  problems     problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+}
+
+model departments {
+  id               Int                @id(map: "department_pkey") @default(autoincrement())
+  name             String             @db.VarChar
+  student_profiles student_profiles[]
+  users            users[]
+}
+
+model hackathons {
+  id                           Int                            @id @default(autoincrement())
+  title                        String
+  platform_source              String
+  organizer                    String?
+  start_date                   DateTime?
+  end_date                     DateTime?
+  registration_deadline        DateTime?
+  mode                         String?
+  location                     String?
+  prize_pool                   String?
+  difficulty                   String?
+  tags                         Json?
+  url                          String                         @unique
+  description                  String?
+  image_url                    String?
+  eligibility                  String?
+  team_size                    String?
+  is_active                    Boolean                        @default(true)
+  view_count                   Int                            @default(0)
+  bookmark_count               Int                            @default(0)
+  created_at                   DateTime                       @default(now())
+  updated_at                   DateTime
+  category                     String                         @default("hackathon")
+  user_hackathon_participation user_hackathon_participation[]
+
+  @@index([category])
+  @@index([difficulty])
+  @@index([is_active])
+  @@index([platform_source])
+  @@index([start_date])
+}
+
+model login_logs {
+  id         Int               @id @default(autoincrement())
+  user_id    Int
+  ip_address String?           @db.VarChar
+  status     login_status_enum
+  created_at DateTime?         @default(now()) @db.Timestamp(6)
+  users      users             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model modules {
+  id            Int        @id @default(autoincrement())
+  parent_id     Int?
+  name          String     @db.VarChar
+  order_index   Int?
+  is_leaf       Boolean?   @default(false)
+  created_by    Int
+  users         users      @relation(fields: [created_by], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  modules       modules?   @relation("modulesTomodules", fields: [parent_id], references: [id], onUpdate: NoAction)
+  other_modules modules[]  @relation("modulesTomodules")
+  problems      problems[]
+}
+
+model opensource_issues {
+  id                 Int                  @id @default(autoincrement())
+  platform_source    String
+  repo_name          String
+  repo_url           String?
+  issue_title        String
+  issue_number       Int?
+  issue_url          String               @unique
+  organization       String?
+  description        String?
+  language           String?
+  labels             Json?
+  difficulty         String?
+  stars              Int                  @default(0)
+  forks              Int                  @default(0)
+  has_mentor         Boolean              @default(false)
+  mentor_info        String?
+  time_estimate      String?
+  created_date       DateTime?
+  updated_date       DateTime?
+  is_assigned        Boolean              @default(false)
+  assignee           String?
+  comment_count      Int                  @default(0)
+  bounty_amount      Decimal?             @db.Decimal(10, 2)
+  bounty_currency    String?
+  view_count         Int                  @default(0)
+  bookmark_count     Int                  @default(0)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime
+  user_contributions user_contributions[]
+
+  @@index([difficulty])
+  @@index([is_assigned])
+  @@index([language])
+  @@index([platform_source])
+}
+
+model permissions {
+  id               Int                @id @default(autoincrement())
+  permission       String             @unique @db.VarChar
+  role_permissions role_permissions[]
+}
+
+model placements {
+  id              Int      @id @default(autoincrement())
+  user_id         Int
+  placement_group String   @db.VarChar(255)
+  created_at      DateTime @default(now())
+  users           users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model platform_sync_status {
+  id            Int       @id @default(autoincrement())
+  platform_name String    @unique
+  data_type     String
+  last_sync_at  DateTime?
+  next_sync_at  DateTime?
+  sync_status   String    @default("success")
+  error_message String?
+  items_fetched Int       @default(0)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime
+
+  @@index([platform_name, data_type])
+}
+
+model problems {
+  id               Int                @id @default(autoincrement())
+  module_id        Int?
+  title            String             @db.VarChar
+  description      String?
+  difficulty       difficulty_enum
+  order_index      Int?
+  created_by       Int
+  is_published     Boolean?           @default(false)
+  daily_challenges daily_challenges[]
+  users            users              @relation(fields: [created_by], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  modules          modules?           @relation(fields: [module_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  submissions      submissions[]
+  test_problems    test_problems[]
+  testcases        testcases[]
+}
+
+model programming_language {
+  id          Int           @id @default(autoincrement())
+  language    String        @unique @db.VarChar
+  submissions submissions[]
+}
+
+model role_permissions {
+  id          Int         @id @default(autoincrement())
+  role        Int
+  permission  Int
+  permissions permissions @relation(fields: [permission], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  roles       roles       @relation(fields: [role], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([role, permission])
+}
+
+model roles {
+  id               Int                @id @default(autoincrement())
+  role             String             @unique @db.VarChar
+  role_permissions role_permissions[]
+  users            users[]
+}
+
+model store_items {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar
+  description    String?
+  cost           Int
+  image_url      String?
+  type           String           @db.VarChar
+  is_active      Boolean          @default(true)
+  created_at     DateTime         @default(now())
+  updated_at     DateTime
+  user_purchases user_purchases[]
+}
+
+model student_platform_profiles {
+  id               Int              @id @default(autoincrement())
+  student_id       Int              @unique
+  leetcode         String?          @db.VarChar
+  hackerrank       String?          @db.VarChar
+  codeforces       String?          @db.VarChar
+  atcoder          String?          @db.VarChar
+  skillrack        String?          @db.VarChar
+  codechef         String?          @db.VarChar
+  student_profiles student_profiles @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model student_profiles {
+  id                                      Int                        @id @default(autoincrement())
+  user_id                                 Int                        @unique
+  department_id                           Int
+  batch_id                                Int
+  mentor_id                               Int?
+  edit_allowed                            Boolean                    @default(true)
+  edit_request_status                     String                     @default("NONE")
+  is_profile_complete                     Boolean                    @default(false)
+  student_platform_profiles               student_platform_profiles?
+  batches                                 batches                    @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  departments                             departments                @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_student_profiles_mentor_idTousers users?                     @relation("student_profiles_mentor_idTousers", fields: [mentor_id], references: [id], onUpdate: NoAction)
+  users_student_profiles_user_idTousers   users                      @relation("student_profiles_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model submissions {
+  id                   Int                    @id @default(autoincrement())
+  user_id              Int
+  problem_id           Int
+  test_attempt_id      Int?
+  language_id          Int
+  ip_address           String?                @db.VarChar
+  code                 String
+  status               submission_status_enum
+  runtime              Int?
+  memory               Int?
+  created_at           DateTime?              @default(now()) @db.Timestamp(6)
+  programming_language programming_language   @relation(fields: [language_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  problems             problems               @relation(fields: [problem_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  test_attempts        test_attempts?         @relation(fields: [test_attempt_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                users                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([problem_id], map: "idx_submissions_problem")
+  @@index([user_id], map: "idx_submissions_user")
+}
+
+model tags {
+  id                Int                 @id @default(autoincrement())
+  name              String              @unique @db.VarChar(255)
+  blog_tags_mapping blog_tags_mapping[]
+}
+
+model test_attempts {
+  id             Int                      @id @default(autoincrement())
+  test_id        Int
+  user_id        Int
+  start_time     DateTime?                @default(now()) @db.Timestamp(6)
+  end_time       DateTime?                @db.Timestamp(6)
+  attempt_number Int?                     @default(1)
+  status         test_attempt_status_enum
+  is_blocked     Boolean                  @default(false)
+  warning_count  Int                      @default(0)
+  submissions    submissions[]
+  tests          tests                    @relation(fields: [test_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users          users                    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_test_attempts_user")
+}
+
+model test_problems {
+  test_id    Int
+  problem_id Int
+  problems   problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  tests      tests    @relation(fields: [test_id], references: [id], onDelete: Cascade)
+
+  @@unique([test_id, problem_id], map: "test_problems_new_unique")
+}
+
+model testcases {
+  id         Int      @id @default(autoincrement())
+  problem_id Int
+  input      String
+  output     String
+  problems   problems @relation(fields: [problem_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tests {
+  id            Int              @id @default(autoincrement())
+  name          String           @db.VarChar
+  batch_id      Int
+  college_id    Int
+  start_time    DateTime?        @db.Timestamp(6)
+  end_time      DateTime?        @db.Timestamp(6)
+  status        test_status_enum @default(NOT_SCHEDULED)
+  created_by    Int
+  test_attempts test_attempts[]
+  test_problems test_problems[]
+  batches       batches          @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  colleges      colleges         @relation(fields: [college_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users         users            @relation(fields: [created_by], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([status], map: "idx_tests_status")
+}
+
+model user_bookmarks {
+  id            Int       @id @default(autoincrement())
+  user_id       Int
+  bookmark_type String
+  item_id       Int
+  notes         String?
+  reminder_set  Boolean   @default(false)
+  reminder_date DateTime?
+  created_at    DateTime  @default(now())
+  users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, bookmark_type, item_id])
+  @@index([user_id, bookmark_type])
+}
+
+model user_contributions {
+  id                Int               @id @default(autoincrement())
+  user_id           Int
+  issue_id          Int
+  status            String            @default("interested")
+  github_username   String?
+  pr_url            String?
+  started_at        DateTime?
+  completed_at      DateTime?
+  notes             String?
+  created_at        DateTime          @default(now())
+  updated_at        DateTime
+  opensource_issues opensource_issues @relation(fields: [issue_id], references: [id], onDelete: Cascade)
+  users             users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, status])
+}
+
+model user_hackathon_participation {
+  id           Int        @id @default(autoincrement())
+  user_id      Int
+  hackathon_id Int
+  status       String     @default("interested")
+  team_name    String?
+  project_name String?
+  project_url  String?
+  prize_won    String?
+  created_at   DateTime   @default(now())
+  updated_at   DateTime
+  hackathons   hackathons @relation(fields: [hackathon_id], references: [id], onDelete: Cascade)
+  users        users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, status])
+}
+
+model user_preferences {
+  id                   Int      @id @default(autoincrement())
+  user_id              Int      @unique
+  preferred_languages  Json?
+  preferred_domains    Json?
+  difficulty_level     String   @default("beginner")
+  hackathon_mode_pref  String   @default("all")
+  notification_enabled Boolean  @default(true)
+  email_digest         String   @default("weekly")
+  created_at           DateTime @default(now())
+  updated_at           DateTime
+  users                users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model user_purchases {
+  id           Int         @id @default(autoincrement())
+  user_id      Int
+  item_id      Int
+  purchased_at DateTime    @default(now())
+  store_items  store_items @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model users {
+  id                                                 Int                            @id @default(autoincrement())
+  name                                               String                         @db.VarChar
+  email                                              String                         @unique @db.VarChar
+  password                                           String                         @db.VarChar(255)
+  role_id                                            Int
+  is_super_admin                                     Boolean?                       @default(false)
+  college_id                                         Int?
+  department_id                                      Int?
+  created_at                                         DateTime?                      @default(now()) @db.Timestamp(6)
+  last_login                                         DateTime?                      @db.Timestamp(6)
+  coins                                              Int                            @default(0)
+  last_solved_date                                   DateTime?
+  streak                                             Int                            @default(0)
+  github_id                                          String?                        @unique @db.VarChar
+  github_username                                    String?                        @db.VarChar
+  action_logs                                        action_logs[]
+  blogs                                              blogs[]
+  comments                                           comments[]
+  login_logs                                         login_logs[]
+  modules                                            modules[]
+  placements                                         placements[]
+  problems                                           problems[]
+  student_profiles_student_profiles_mentor_idTousers student_profiles[]             @relation("student_profiles_mentor_idTousers")
+  student_profiles_student_profiles_user_idTousers   student_profiles?              @relation("student_profiles_user_idTousers")
+  submissions                                        submissions[]
+  test_attempts                                      test_attempts[]
+  tests                                              tests[]
+  user_bookmarks                                     user_bookmarks[]
+  user_contributions                                 user_contributions[]
+  user_hackathon_participation                       user_hackathon_participation[]
+  user_preferences                                   user_preferences?
+  user_purchases                                     user_purchases[]
+  colleges                                           colleges?                      @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  departments                                        departments?                   @relation(fields: [department_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles                                              roles                          @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  vote_user_mapping                                  vote_user_mapping[]
+
+  @@index([email], map: "idx_users_email")
+}
+
+model vote_user_mapping {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  blog_id      Int
+  is_up_vote   Boolean? @default(false)
+  is_down_vote Boolean? @default(false)
+  blogs        blogs    @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+  users        users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+enum difficulty_enum {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum login_status_enum {
+  SUCCESS
+  FAILURE
+}
+
+enum submission_status_enum {
+  NOT_ATTEMPTED
+  SOLVED
+  WRONG_ANSWER
+}
+
+enum test_attempt_status_enum {
+  STARTED
+  COMPLETED
+}
+
+enum test_status_enum {
+  NOT_SCHEDULED
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}

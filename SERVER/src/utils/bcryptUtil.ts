@@ -1,0 +1,1 @@
+//write two functions that hashPassword, checksPassword
