@@ -19,10 +19,7 @@ This is the backend for the College LMS Platform.
 
 2.  **Environment Variables**
     Create a `.env` file with the following:
-    ```env
-    DATABASE_URL="postgresql://user:password@localhost:5432/lms_db"
-    PORT=3000
-    ```
+    refer to the whatsApp chat
 
 3.  **Run Development Server**
     ```bash
