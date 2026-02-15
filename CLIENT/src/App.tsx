@@ -6,10 +6,16 @@ import { Page404, Unauthorized, Login } from "./pages";
 import { ADMIN_PERMISSIONS, CLIENT_PERMISSIONS } from "./constants/permissions";
 import { ADMIN_ROUTES, CLIENT_ROUTES } from "./constants/routeConfig";
 import { RouteRenderer } from "./config/RouteRenderer";
+import { useAppSelector } from "./redux/hooks"
+import { Loader } from "./components";
 
 function App() {
+  const isLoading: boolean = useAppSelector((s: any) => s.loading.isLoading);
   return (
     <BrowserRouter>
+      {isLoading && (
+        <Loader isLoading={isLoading} />
+      )}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
