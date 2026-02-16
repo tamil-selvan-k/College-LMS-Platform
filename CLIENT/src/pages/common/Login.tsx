@@ -5,6 +5,7 @@ import { useAppDispatch } from "../../redux/hooks";
 import { setJWTToken } from "../../redux/features/jwtSlice";
 import { setPermissions } from "../../redux/features/permissionsSlice";
 import logo from "../../assets/logo1.png";
+import { ThemeChanger } from "../../components";
 
 type loginResponseType = {
   message: String,
@@ -21,12 +22,12 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+
     try {
       const data: loginResponseType = await postApi({ url: "/auth/login", data: { email, password } });
 
@@ -40,6 +41,7 @@ export default function Login() {
         permissions: permissions,
         role: role
       }));
+
       if (role === "STUDENT") {
         navigate("/dashboard/student")
       } else {
@@ -47,15 +49,11 @@ export default function Login() {
       }
     } catch (err) {
 
-      console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--background)] relative overflow-hidden">
-
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--primary-alpha)] rounded-full blur-3xl opacity-20 animate-[float_8s_ease-in-out_infinite]"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[var(--primary-alpha)] rounded-full blur-3xl opacity-20 animate-[float_6s_ease-in-out_infinite_reverse]"></div>
@@ -147,28 +145,21 @@ export default function Login() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+
               className="w-full py-4 rounded-xl font-bold text-white text-base transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 shadow-lg hover:shadow-xl relative overflow-hidden group/btn"
             >
-              <div className={`absolute inset-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] transition-opacity duration-300 ${loading ? 'opacity-60' : 'opacity-100'}`}></div>
+              <div className={`absolute inset-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] transition-opacity duration-300   opacity-100`}></div>
               <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-hover)] to-[var(--accent)] opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
               <span className="relative z-10 flex items-center justify-center gap-2">
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <svg className="w-5 h-5 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </>
-                )}
+
+
+                <>
+                  <span>Sign In</span>
+                  <svg className="w-5 h-5 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </>
+
               </span>
             </button>
           </form>

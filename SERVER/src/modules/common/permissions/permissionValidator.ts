@@ -1,24 +1,16 @@
-import { validationResult, body} from "express-validator";
+import { validationResult, body, param} from "express-validator";
 import { Request, Response as ExpressResponse, NextFunction } from "express";
 import { Response } from "../../../utils";
 import { STATUS_CODE } from "../../../constants/appConstants";
 
-export const authValidators = {
-  login: [
-    body('email')
-      .exists({ checkFalsy: true })
-      .withMessage('email is required')
-      .isEmail()
-      .withMessage('enter a correct email'),
 
-    body('password')
-      .exists({ checkFalsy: true })
-      .withMessage('password is required')
-      .isString()
-      .withMessage('password must be a string'),
+export const permissionValidator = {
+  hasPermission: [
+    param("permission").isLength({min: 1}).withMessage("permission is required"),
     validator
   ]
 };
+
 
 export function validator(req: Request, res: ExpressResponse, next: NextFunction) {
   const errors = validationResult(req);

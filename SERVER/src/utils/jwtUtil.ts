@@ -1,6 +1,15 @@
 import jwt from "jsonwebtoken";
+import { CustomError } from "./CustomError";
+import { STATUS_CODE } from "../constants";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
+
+interface JwtPayload {
+  userId: number;
+  roleId: number;
+  collegeId: number;
+  isSuperAdmin: boolean;
+}
 
 /**
  * Generates a JWT token for a given payload.
@@ -8,8 +17,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
  * @param expiresIn - Expiration time (e.g., '1d', '1h'). Defaults to '1d'.
  * @returns The generated JWT token.
  */
-export const generateToken = (payload: object, expiresIn: any = "1d"): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+export const generateToken = (payload: JwtPayload, expiresIn: string = "1d"): string => {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn } as jwt.SignOptions);
 };
 
 /**
@@ -21,6 +30,9 @@ export const verifyToken = (token: string): any => {
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch (error) {
-    throw new Error("Invalid or expired token");
+    throw new CustomError({
+      message: "Invalid or expired token",
+      statusCode: STATUS_CODE.UNAUTHORIZED
+    });
   }
 };

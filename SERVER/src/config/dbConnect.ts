@@ -1,13 +1,17 @@
-import prisma from "./db";
+import getAdminPrisma from "./adminPrisma";
+import logger from "./logger";
 
+/**
+ * Connects to the admin database on server startup
+ * Tenant databases are connected on-demand via tenantPool
+ */
 export const connectDB = async () => {
   try {
-    await prisma.$connect();
-    console.log("DB Connected successfully via Prisma");
+    const adminPrisma = getAdminPrisma();
+    await adminPrisma.$connect();
+    logger.info("Admin database connected successfully");
   } catch (err) {
-    console.error("DB connection failed:", err);
+    logger.error("Admin database connection failed:", err);
     process.exit(1);
   }
 };
-
-export default prisma;

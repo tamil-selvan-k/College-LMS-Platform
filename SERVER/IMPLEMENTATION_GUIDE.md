@@ -313,21 +313,25 @@ Follow this step-by-step process using the module-based structure:
 Create business logic in `src/modules/[admin|client]/[feature]/[feature]Service.ts`:
 
 \`\`\`typescript
-import prisma from "../../../config/db";
-import { AppError } from "../../../utils/errorMiddleware";
+import { getTenantConnection } from "../../../config";
+import CustomError from "../../../utils/CustomError";
+import { STATUS_CODE } from "../../../constants";
 
-export const createItem = async (data: CreateItemInput) => {
+export const createItem = async (data: CreateItemInput, tenantPrisma: any) => {
   // Validation
-  const existing = await prisma.items.findUnique({
+  const existing = await tenantPrisma.items.findUnique({
     where: { id: data.id }
   });
   
   if (existing) {
-    throw new AppError("Item already exists", 400);
+    throw new CustomError({ 
+      message: "Item already exists", 
+      statusCode: STATUS_CODE.CONFLICT 
+    });
   }
 
   // Create
-  const item = await prisma.items.create({
+  const item = await tenantPrisma.items.create({
     data,
     include: {
       // Include related data
@@ -343,18 +347,32 @@ export const createItem = async (data: CreateItemInput) => {
 Create request handlers in `src/modules/[admin|client]/[feature]/[feature]Controller.ts`:
 
 \`\`\`typescript
-import { Request, Response } from "express";
+import { Request, Response as ExpressResponse } from "express";
 import * as featureService from "./featureService";
-import { asyncHandler } from "../../../utils/errorMiddleware";
-import { sendSuccess } from "../../../utils/responseUtil";
+import { Response } from "../../../utils";
+import { STATUS_CODE } from "../../../constants";
+import CustomError from "../../../utils/CustomError";
 
-export const createItemController = asyncHandler(
-  async (req: Request, res: Response) => {
+export const createItemController = async (req: Request, res: ExpressResponse) => {
+  try {
     const data = req.body;
-    const item = await featureService.createItem(data);
-    sendSuccess(res, 201, "Item created successfully", item);
+    const item = await featureService.createItem(data, req.tenantPrisma);
+    
+    return Response({ 
+      res, 
+      data: item, 
+      message: "Item created successfully", 
+      statusCode: STATUS_CODE.CREATED 
+    });
+  } catch (err: any) {
+    return Response({
+      res,
+      data: null,
+      message: err.message,
+      statusCode: err instanceof CustomError ? err.statusCode : STATUS_CODE.INTERNAL_SERVER_ERROR,
+    });
   }
-);
+};
 \`\`\`
 
 #### 3. **Define Routes**
@@ -431,42 +449,60 @@ curl -X POST http://localhost:3000/api/admin/items \\
 
 ### Error Handling
 
-**AppError Class**: Custom error class for operational errors
+**CustomError Class**: Custom error class for operational errors with HTTP status codes
 
 \`\`\`typescript
-import { AppError } from "../utils/errorMiddleware";
+import CustomError from "../utils/CustomError";
+import { STATUS_CODE } from "../constants";
 
-throw new AppError("Resource not found", 404);
+// Throw with specific status code
+throw new CustomError({ 
+  message: "Resource not found", 
+  statusCode: STATUS_CODE.NOT_FOUND 
+});
+
+// Default status code is BAD_REQUEST (400)
+throw new CustomError({ message: "Invalid input" });
 \`\`\`
 
-**asyncHandler**: Wrapper for async route handlers
+**Controller Error Handling**: Always check if error is CustomError
 
 \`\`\`typescript
-import { asyncHandler } from "../utils/errorMiddleware";
-
-export const myController = asyncHandler(async (req, res) => {
-  // Your async code - errors are automatically caught
-});
+try {
+  // Your service logic
+} catch (err: any) {
+  return Response({
+    res,
+    data: null,
+    message: err.message,
+    statusCode: err instanceof CustomError ? err.statusCode : STATUS_CODE.INTERNAL_SERVER_ERROR,
+  });
+}
 \`\`\`
 
 ### Response Formatting
 
-**sendSuccess**: Standardized success response
+**Response Utility**: Standardized response format
 
 \`\`\`typescript
-import { sendSuccess } from "../utils/responseUtil";
+import { Response } from "../utils";
+import { STATUS_CODE } from "../constants";
 
-sendSuccess(res, 200, "Operation successful", data);
-// Response: { success: true, message: "...", data: {...} }
-\`\`\`
+// Success response
+return Response({ 
+  res, 
+  data: result, 
+  message: "Operation successful", 
+  statusCode: STATUS_CODE.OK 
+});
 
-**sendError**: Standardized error response
-
-\`\`\`typescript
-import { sendError } from "../utils/responseUtil";
-
-sendError(res, 400, "Validation failed", errors);
-// Response: { success: false, message: "...", errors: {...} }
+// Error response
+return Response({ 
+  res, 
+  data: null, 
+  message: "Operation failed", 
+  statusCode: STATUS_CODE.BAD_REQUEST 
+});
 \`\`\`
 
 ### Authentication
@@ -489,58 +525,90 @@ const decoded = verifyToken({ token });
 
 ### Logging
 
+**Always use logger instead of console.log**:
+
 \`\`\`typescript
-import { logger } from "./config/index";
+import logger from "../config/logger";
 
 logger.info("Information message");
-logger.error("Error message", { error });
+logger.error("Error occurred:", error);
 logger.warn("Warning message");
+logger.debug("Debug information");
 \`\`\`
+
+**Log Levels**:
+- `logger.error()` - Errors and exceptions
+- `logger.warn()` - Warning messages  
+- `logger.info()` - General information (default)
+- `logger.debug()` - Debugging (dev only)
 
 ---
 
 ## Best Practices
 
 ### 1. **Error Handling**
-- Always use \`asyncHandler\` for async route handlers
-- Throw \`AppError\` for operational errors
-- Let unexpected errors bubble up to global error handler
+- Always use `CustomError` with appropriate `STATUS_CODE` constants
+- Check `instanceof CustomError` in controllers to use custom status codes
+- Let unexpected errors return `INTERNAL_SERVER_ERROR` (500)
+- Never expose sensitive information in error messages
 
-### 2. **Database Operations**
+**Example**:
+\`\`\`typescript
+// Service layer
+throw new CustomError({ 
+  message: "User not found", 
+  statusCode: STATUS_CODE.NOT_FOUND 
+});
+
+// Controller layer
+catch (err: any) {
+  return Response({
+    res, data: null, message: err.message,
+    statusCode: err instanceof CustomError ? err.statusCode : STATUS_CODE.INTERNAL_SERVER_ERROR
+  });
+}
+\`\`\`
+
+### 2. **Multi-Tenant Operations**
+- Always use `req.tenantPrisma` for tenant database operations
+- Apply `validateTenant` middleware to all protected routes
+- Access tenant info via `req.tenant`
+- Never use global `prisma` client in multi-tenant routes
+
+**Example**:
+\`\`\`typescript
+// Good - tenant-specific
+const students = await req.tenantPrisma.student_profiles.findMany();
+
+// Bad - wrong database
+const students = await prisma.student_profiles.findMany();
+\`\`\`
+
+### 3. **Logging**
+- Always use `logger` instead of `console.log`
+- Use appropriate log levels (error, warn, info, debug)
+- Include context in log messages
+- Never log sensitive information (passwords, tokens)
+
+### 4. **Database Operations**
 - Use Prisma's type-safe queries
 - Always select only needed fields
 - Use transactions for multi-step operations
-- Handle unique constraint violations
+- Handle unique constraint violations gracefully
 
-### 3. **Security**
+### 5. **Security**
 - Never expose passwords in responses
 - Validate all user inputs
 - Use parameterized queries (Prisma does this automatically)
 - Implement proper authentication/authorization
+- Verify tenant isolation in all operations
 
-### 4. **Code Organization**
+### 6. **Code Organization**
 - Keep controllers thin - delegate to services
 - Keep services focused on business logic
 - Use TypeScript interfaces for type safety
 - Follow the existing folder structure
-
-### 5. **API Design**
-- Use RESTful conventions
-- Return consistent response formats
-- Use appropriate HTTP status codes
-- Version your APIs if needed
-
-### 6. **Testing**
-- Write unit tests for services
-- Write integration tests for endpoints
-- Test error scenarios
-- Use Prisma's test utilities
-
-### 7. **Performance**
-- Use database indexes appropriately
-- Implement pagination for large datasets
-- Cache frequently accessed data
-- Use \`select\` to limit returned fields
+- Export utilities from index files for clean imports
 
 ---
 
