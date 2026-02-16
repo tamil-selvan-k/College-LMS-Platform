@@ -7,24 +7,7 @@ import logger from '../config/logger';
 import getAdminPrisma from '../config/adminPrisma';
 import getTenantConnection from '../config/tenantPool';
 
-// Extend Express Request to include tenant context
-declare global {
-  namespace Express {
-    interface Request {
-      tenant?: {
-        college_id: number;
-        college_name: string;
-        uniq_string: string;
-      };
-      tenantPrisma?: any;
-      user?: {
-        user_id: number;
-        role_id: number;
-        college_id: number;
-      };
-    }
-  }
-}
+// Type definitions are centralized in src/types/express.d.ts
 
 /**
  * Middleware to validate tenant and inject connection
@@ -36,10 +19,10 @@ export async function validateTenant(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Get college_id from JWT (already decoded by auth middleware)
-    const college_id = req.user?.college_id;
+    // Get collegeId from JWT (already decoded by auth middleware)
+    const collegeId = req.user?.collegeId;
 
-    if (!college_id) {
+    if (!collegeId) {
       Response({
         res,
         data: null,
@@ -55,7 +38,7 @@ export async function validateTenant(
     // Check if college exists in lms_admin
     const tenant = await adminPrisma.tenants.findFirst({
       where: {
-        id: college_id,
+        id: collegeId,
         is_active: true,
       },
       select: {
@@ -81,9 +64,10 @@ export async function validateTenant(
 
     // Inject tenant context into request
     req.tenant = {
-      college_id: tenant.id,
+      id: tenant.id,
       college_name: tenant.college_name,
       uniq_string: tenant.uniq_string,
+      db_string: tenant.db_string,
     };
     req.tenantPrisma = tenantPrisma;
 

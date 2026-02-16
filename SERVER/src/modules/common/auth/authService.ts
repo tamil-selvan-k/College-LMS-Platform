@@ -1,6 +1,6 @@
 import {getAdminPrisma, getTenantConnection} from '../../../config';
 import { comparePassword, generateToken } from '../../../utils';
-import CustomError from '../../../utils/CustomError';
+import { CustomError } from '../../../utils';
 import { STATUS_CODE } from '../../../constants';
 
 export const loginService = async ({ email, password }: { email: string; password: string }) => {
@@ -89,11 +89,12 @@ export const loginService = async ({ email, password }: { email: string; passwor
 		permissions = rolePerms.map((rp: any) => rp.permissions.permission);
 	}
 
-	// Generate JWT token with user_id, role_id, and college_id
+	// Generate JWT token with user_id, role_id, college_id, and is_super_admin
 	const token = generateToken({ 
 		userId: user.id, 
 		roleId: user.role_id,
 		collegeId: tenant.id,
+		isSuperAdmin: user.is_super_admin ?? false,
 	});
 
 	return {

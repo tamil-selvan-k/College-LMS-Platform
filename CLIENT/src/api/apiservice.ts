@@ -3,6 +3,13 @@ import { store } from "./../redux/store";
 import { setLoadingTrue, setLoadingFalse } from "../redux/features/loadingSlice";
 import toasterHelper from "../utils/toasterHelper";
 
+// Function to handle 401 errors and redirect
+const handle401Error = () => {
+  if (typeof window !== 'undefined') {
+    window.location.href = '/unauthorized';
+  }
+};
+
 
 type apiServiceType = {
   url: string;
@@ -30,6 +37,12 @@ export const getApi = async (props: apiServiceType) => {
     return response.data;
   } catch (err: any) {
     if (err.response) {
+      // Handle 401 Unauthorized - redirect to unauthorized page
+      if (err.response.status === 401) {
+        handle401Error();
+        throw err;
+      }
+      
       if (showToaster) {
         toasterHelper({ 
           message: err.response.data?.message || "Request failed", 
@@ -42,6 +55,7 @@ export const getApi = async (props: apiServiceType) => {
         status: 500 
       });
     }
+  
     throw err; // Re-throw to allow caller to handle if needed
   } finally {
     if (showLoader) {
@@ -66,11 +80,14 @@ export const postApi = async (props: apiServiceType) => {
     });
 
     if (showToaster && response.data?.message) {
-      console.log(response.data.message);
       toasterHelper({ message: response.data.message, status: response.status });
     }
     return response.data;
   } catch (err: any) {
+    if (err.response.status === 401) {
+        handle401Error();
+        throw err;
+      }
     if (err.response) {
       if (showToaster) {
         toasterHelper({ 
@@ -112,6 +129,10 @@ export const putApi = async (props: apiServiceType) => {
     }
     return response.data;
   } catch (err: any) {
+    if (err.response.status === 401) {
+        handle401Error();
+        throw err;
+      }
     if (err.response) {
       if (showToaster) {
         toasterHelper({ 
@@ -154,6 +175,12 @@ export const deleteApi = async (props: apiServiceType) => {
     return response.data;
   } catch (err: any) {
     if (err.response) {
+      // Handle 401 Unauthorized - redirect to unauthorized page
+      if (err.response.status === 401) {
+        handle401Error();
+        throw err;
+      }
+
       if (showToaster) {
         toasterHelper({ 
           message: err.response.data?.message || "Request failed", 

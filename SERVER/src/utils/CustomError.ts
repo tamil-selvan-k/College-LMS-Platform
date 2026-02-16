@@ -1,6 +1,6 @@
 import { STATUS_CODE } from "../constants";
 
-export default class CustomError extends Error {
+export class CustomError extends Error {
   statusCode: number;
 
   constructor({ message, statusCode = STATUS_CODE.BAD_REQUEST }: { message: string; statusCode?: number }) {

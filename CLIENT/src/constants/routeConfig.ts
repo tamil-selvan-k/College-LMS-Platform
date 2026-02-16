@@ -131,7 +131,7 @@ export const getRouteMapByRole = (
 };
 
 export const hasPermission = (
-  userPermissions: string[],
+  userPermissions: String[],
   requiredPermission: string
 ): boolean => {
   return userPermissions.includes(requiredPermission);
