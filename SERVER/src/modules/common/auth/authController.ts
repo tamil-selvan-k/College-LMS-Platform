@@ -1,7 +1,7 @@
 import { Request, Response as ExpressResponse } from 'express';
-import { Response } from '../../utils';
-import { STATUS_CODE } from '../../constants/appConstants';
-import { loginService } from '../../services/auth/authService';
+import { Response } from '../../../utils';
+import { STATUS_CODE } from '../../../constants/appConstants';
+import { loginService } from './authService';
 
 export const loginController = async (req: Request, res: ExpressResponse) => {
   try {

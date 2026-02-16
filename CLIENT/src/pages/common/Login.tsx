@@ -4,8 +4,7 @@ import { postApi } from "../../api/apiservice";
 import { useAppDispatch } from "../../redux/hooks";
 import { setJWTToken } from "../../redux/features/jwtSlice";
 import { setPermissions } from "../../redux/features/permissionsSlice";
-import logo from "./logo1.png";
-
+import logo from "../../assets/logo1.png";
 
 type loginResponseType = {
   message: String,
@@ -36,7 +35,6 @@ export default function Login() {
       const role = data.data.role;
       const permissions = data.data.permissions;
 
-      // Save to redux
       dispatch(setJWTToken({ jwtToken: token }));
       dispatch(setPermissions({
         permissions: permissions,
@@ -48,7 +46,7 @@ export default function Login() {
         navigate("/dashboard/admin")
       }
     } catch (err) {
-      // postApi shows toasts; keep UI simple
+
       console.error(err);
     } finally {
       setLoading(false);
@@ -56,65 +54,126 @@ export default function Login() {
   };
 
   return (
-<div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4">
-<div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--surface-color)] border border-[var(--border-color)] rounded-x2 shadow-lg overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--background)] relative overflow-hidden">
 
-  {/* LEFT LOGO */}
-  <div className="flex items-center justify-center bg-[var(--color-muted)] px-10">
-<img src={logo} className="w-full h-full object-contain" alt="logo" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--primary-alpha)] rounded-full blur-3xl opacity-20 animate-[float_8s_ease-in-out_infinite]"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[var(--primary-alpha)] rounded-full blur-3xl opacity-20 animate-[float_6s_ease-in-out_infinite_reverse]"></div>
+      </div>
 
-    
-    
-  </div>
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.1)] bg-[var(--surface-color)] border border-[var(--border-color)] relative z-10 backdrop-blur-sm">
 
-  {/* RIGHT LOGIN FORM */}
-  <div className="p-10 flex flex-col justify-center">
-
-      <div className="mb-6 text-center w-full">
-  <h1 className="text-2xl alignment-font-semibold text-[var(--text-primary)]">
-    LMS-PLATFORM
-  </h1>
-  <p className="text-[var(--text-secondary)] mt-1">Sign in</p>
-</div>
-
-      <form onSubmit={handleSubmit} className="w-full max-w-sm">
-
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", marginBottom: 6 }}>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8, borderRadius: 4, border: "1px solid #cbd5e1" }}
-          />
+        <div className="flex items-center justify-center p-12 lg:p-16 bg-[var(--bg-muted)] relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[var(--accent)] to-transparent"></div>
+          </div>
+          <div className="relative z-10 w-full max-w-md">
+            <img
+              src={logo}
+              className="w-full h-auto object-contain drop-shadow-2xl animate-[fadeIn_0.6s_ease-out]"
+              alt="LMS Platform Logo"
+            />
+            <div className="mt-8 text-center animate-[fadeIn_0.8s_ease-out]">
+              <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">LMS Platform</h2>
+              <p className="text-[var(--text-secondary)]">Empowering Education Through Technology</p>
+            </div>
+          </div>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", marginBottom: 6 }}>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8, borderRadius: 4, border: "1px solid #cbd5e1" }}
-          />
+
+        <div className="p-8 sm:p-12 lg:p-16 flex flex-col justify-center bg-[var(--surface-color)]">
+          <div className="mb-10 animate-[fadeIn_0.4s_ease-out]">
+            <h1 className="text-4xl font-bold mb-3 text-[var(--text-primary)] bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] bg-clip-text text-transparent">
+              Welcome Back
+            </h1>
+            <p className="text-[var(--text-secondary)] text-lg">
+              Sign in to continue to LMS Platform
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5 animate-[fadeIn_0.6s_ease-out]">
+            <div className="group">
+              <label className="block text-sm font-semibold mb-2 text-[var(--text-primary)] transition-colors group-focus-within:text-[var(--accent)]">
+                Email Address
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="Enter your email"
+                  className="w-full px-4 py-3.5 rounded-xl bg-[var(--surface-color)] border-2 border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none transition-all duration-300 focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--primary-alpha)] hover:border-[var(--text-secondary)]"
+                />
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] opacity-0 group-focus-within:opacity-5 transition-opacity duration-300 pointer-events-none"></div>
+              </div>
+            </div>
+
+            <div className="group">
+              <label className="block text-sm font-semibold mb-2 text-[var(--text-primary)] transition-colors group-focus-within:text-[var(--accent)]">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="Enter your password"
+                  className="w-full px-4 py-3.5 rounded-xl bg-[var(--surface-color)] border-2 border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none transition-all duration-300 focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--primary-alpha)] hover:border-[var(--text-secondary)]"
+                />
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] opacity-0 group-focus-within:opacity-5 transition-opacity duration-300 pointer-events-none"></div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 cursor-pointer group/check">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-2 border-[var(--border-color)] text-[var(--accent)] focus:ring-2 focus:ring-[var(--primary-alpha)] transition-all cursor-pointer"
+                />
+                <span className="text-sm text-[var(--text-secondary)] group-hover/check:text-[var(--text-primary)] transition-colors">
+                  Remember me
+                </span>
+              </label>
+              <a
+                href="#"
+                className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors duration-200 hover:underline"
+              >
+                Forgot password?
+              </a>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 rounded-xl font-bold text-white text-base transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 shadow-lg hover:shadow-xl relative overflow-hidden group/btn"
+            >
+              <div className={`absolute inset-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] transition-opacity duration-300 ${loading ? 'opacity-60' : 'opacity-100'}`}></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-hover)] to-[var(--accent)] opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <svg className="w-5 h-5 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </>
+                )}
+              </span>
+            </button>
+          </form>
         </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ width: "100%", padding: 10, background: "#497ad5", color: "white", border: "none", borderRadius: 10 }}
-        >
-          {loading ? "Signing in..." : "Sign in"}
-        </button>
-      </form>
+      </div>
     </div>
-    </div>
-</div>
-
-
   );
 }
-
-//STUDENT, RBAC

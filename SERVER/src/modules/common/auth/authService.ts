@@ -1,6 +1,6 @@
-import prisma from '../../config/db';
-import { comparePassword } from '../../utils/bcryptUtil';
-import { generateToken } from '../../utils/jwtUtil';
+import prisma from '../../../config/db';
+import { comparePassword } from '../../../utils/bcryptUtil';
+import { generateToken } from '../../../utils/jwtUtil';
 
 export const loginService = async ({ email, password }: { email: string; password: string }) => {
 	// find user by email and include role relation

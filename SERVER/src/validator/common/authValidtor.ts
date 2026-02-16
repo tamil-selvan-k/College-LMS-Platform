@@ -21,15 +21,17 @@ export const authValidators = {
 
 export const handleValidation = (req: Request, res: Response, next: NextFunction) => {
 	const errors = validationResult(req);
-		if (!errors.isEmpty()) {
-				const first = errors.array()[0];
-				return sendResponse({
-						data: { message: first.msg ?? first },
-						res,
-						statusCode: STATUS_CODE.BAD_REQUEST,
-				});
-		}
-		next();
+	if (!errors.isEmpty()) {
+		const first = errors.array()[0];
+		return sendResponse({
+			res,
+      data: null,
+      message: first.msg,
+			statusCode: STATUS_CODE.BAD_REQUEST,
+		});
+	}
+
+	next();
 };
 
 // convenience middleware: validation chains + result checker

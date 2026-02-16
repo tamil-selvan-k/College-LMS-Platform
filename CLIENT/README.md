@@ -332,6 +332,7 @@ export const ADMIN_ROUTE_MAP = {
 
 ## 📖 Documentation
 
+- **[IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)** - **Primary Guide for Developers** (Architecture, Patterns, Feature Creation)
 - **[auth.md](./auth.md)** - Complete authentication and rendering flow guide
 - **Implementation Guide** - Detailed implementation patterns
 - **Quick Reference** - Essential code snippets

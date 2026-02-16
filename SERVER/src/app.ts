@@ -1,7 +1,7 @@
 import express from "express";
-import adminRouter from "./routes/admin";
-import clientRouter from "./routes/client";
-import authRouter from "./routes/authRouter"
+import adminRouter from "./modules/admin/adminRouter";
+import clientRouter from "./modules/client/clientRouter";
+import authRouter from "./modules/common/auth/authRouter"
 
 const app = express.Router();
 

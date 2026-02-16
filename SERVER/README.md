@@ -4,9 +4,10 @@ This is the backend for the College LMS Platform.
 
 ## Directory Structure
 - **src/config**: Database and other configurations.
-- **src/controllers**: Request handlers, separated by `admin` and `client`.
-- **src/services**: Business logic, separated by `admin` and `client`.
-- **src/routes**: API routes, separated by `admin` and `client`.
+- **src/modules**: Module-based organization separating admin, client, and common functionality.
+  - **src/modules/admin**: Admin-specific routers and logic.
+  - **src/modules/client**: Client-specific routers and logic.
+  - **src/modules/common/auth**: Authentication logic (controllers, services, validators, routes).
 - **src/utils**: Utility functions like logging and authentication.
 - **prisma**: Database schema.
 
