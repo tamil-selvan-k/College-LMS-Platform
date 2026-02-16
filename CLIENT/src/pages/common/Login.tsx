@@ -4,6 +4,7 @@ import { postApi } from "../../api/apiservice";
 import { useAppDispatch } from "../../redux/hooks";
 import { setJWTToken } from "../../redux/features/jwtSlice";
 import { setPermissions } from "../../redux/features/permissionsSlice";
+import logo from "./logo1.png";
 
 
 type loginResponseType = {
@@ -55,9 +56,29 @@ export default function Login() {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: "48px auto", padding: 24, border: "1px solid #e5e7eb", borderRadius: 8 }}>
-      <h2 style={{ marginBottom: 16 }}>Sign in</h2>
-      <form onSubmit={handleSubmit}>
+<div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4">
+<div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--surface-color)] border border-[var(--border-color)] rounded-x2 shadow-lg overflow-hidden">
+
+  {/* LEFT LOGO */}
+  <div className="flex items-center justify-center bg-[var(--color-muted)] px-10">
+<img src={logo} className="w-full h-full object-contain" alt="logo" />
+
+    
+    
+  </div>
+
+  {/* RIGHT LOGIN FORM */}
+  <div className="p-10 flex flex-col justify-center">
+
+      <div className="mb-6 text-center w-full">
+  <h1 className="text-2xl alignment-font-semibold text-[var(--text-primary)]">
+    LMS-PLATFORM
+  </h1>
+  <p className="text-[var(--text-secondary)] mt-1">Sign in</p>
+</div>
+
+      <form onSubmit={handleSubmit} className="w-full max-w-sm">
+
         <div style={{ marginBottom: 12 }}>
           <label style={{ display: "block", marginBottom: 6 }}>Email</label>
           <input
@@ -83,12 +104,16 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          style={{ width: "100%", padding: 10, background: "#4f46e5", color: "white", border: "none", borderRadius: 4 }}
+          style={{ width: "100%", padding: 10, background: "#497ad5", color: "white", border: "none", borderRadius: 10 }}
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
       </form>
     </div>
+    </div>
+</div>
+
+
   );
 }
 
