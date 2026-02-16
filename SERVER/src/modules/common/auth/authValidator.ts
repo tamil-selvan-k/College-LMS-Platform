@@ -1,5 +1,4 @@
-import { validationResult } from "express-validator";
-import { body } from "express-validator";
+import { validationResult, body} from "express-validator";
 import { Request, Response as ExpressResponse, NextFunction } from "express";
 import { Response } from "../../../utils";
 import { STATUS_CODE } from "../../../constants/appConstants";

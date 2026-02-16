@@ -15,12 +15,12 @@ const Sidebar: React.FC<SidebarProps> = ({ routes, onNavigate }) => {
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
     if (!isCollapsed) {
-      setExpandedMenus([]); // Close all menus when collapsing
+      setExpandedMenus([]);
     }
   };
 
   const toggleMenu = (path: string) => {
-    if (isCollapsed) return; // Don't toggle when collapsed
+    if (isCollapsed) return;
     setExpandedMenus((prev) =>
       prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
     );
@@ -31,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ routes, onNavigate }) => {
   const renderMenuItem = (route: RouteConfig, level: number = 0) => {
     const hasChildren = route.children && route.children.length > 0;
     const isExpanded = expandedMenus.includes(route.path);
+    const active = isActive(route.path);
 
     return (
       <div key={route.path}>
@@ -42,24 +43,26 @@ const Sidebar: React.FC<SidebarProps> = ({ routes, onNavigate }) => {
               onNavigate(route.path, route.permission);
             }
           }}
-          style={{
-            padding: isCollapsed ? "12px 8px" : "12px 16px",
-            cursor: "pointer",
-            backgroundColor: isActive(route.path) ? "#e0e7ff" : "transparent",
-            borderLeft: isActive(route.path) ? "3px solid #4f46e5" : "3px solid transparent",
-            display: "flex",
-            alignItems: "center",
-            gap: isCollapsed ? "0" : "12px",
-            justifyContent: isCollapsed ? "center" : "flex-start",
-            transition: "all 0.2s",
-            marginLeft: isCollapsed ? "0" : `${level * 16}px`,
-          }}
+          className={`
+            flex items-center cursor-pointer transition-all duration-200
+            ${isCollapsed ? 'justify-center px-2 py-3' : 'justify-start px-4 py-3'}
+            ${active ? 'bg-[var(--primary-alpha)] border-l-[3px] border-l-[var(--accent)]' : 'border-l-[3px] border-l-transparent hover:bg-[var(--bg-muted)]'}
+            ${!isCollapsed && level > 0 ? 'ml-4' : ''}
+          `}
         >
-          <span style={{ display: "flex", alignItems: "center" }}>{route.icon || "•"}</span>
+          <span className="flex items-center text-[var(--text-primary)]">
+            {route.icon || "•"}
+          </span>
           {!isCollapsed && (
             <>
-              <span style={{ flex: 1, fontSize: "14px" }}>{route.label}</span>
-              {hasChildren && <span style={{ fontSize: "12px" }}>{isExpanded ? "▼" : "▶"}</span>}
+              <span className={`flex-1 ml-3 text-sm text-[var(--text-primary)] ${active ? 'font-semibold' : ''}`}>
+                {route.label}
+              </span>
+              {hasChildren && (
+                <span className="text-xs text-[var(--text-secondary)]">
+                  {isExpanded ? "▼" : "▶"}
+                </span>
+              )}
             </>
           )}
         </div>
@@ -74,47 +77,36 @@ const Sidebar: React.FC<SidebarProps> = ({ routes, onNavigate }) => {
 
   return (
     <div
-      style={{
-        width: isCollapsed ? "60px" : "240px",
-        height: "100vh",
-        backgroundColor: "#ffffff",
-        borderRight: "1px solid #e5e7eb",
-        transition: "width 0.3s ease",
-        display: "flex",
-        flexDirection: "column",
-        position: "fixed",
-        left: 0,
-        top: 0,
-        zIndex: 1000,
-      }}
+      className={`
+        ${isCollapsed ? 'w-[60px]' : 'w-60'}
+        h-screen bg-[var(--surface-color)] border-r border-[var(--border-color)]
+        transition-all duration-300 ease-in-out
+        flex flex-col fixed left-0 top-0 z-[1000]
+      `}
     >
       {/* Header */}
       <div
-        style={{
-          padding: isCollapsed ? "16px 8px" : "16px",
-          borderBottom: "1px solid #e5e7eb",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: isCollapsed ? "center" : "space-between",
-        }}
+        className={`
+          p-4 border-b border-[var(--border-color)]
+          flex items-center
+          ${isCollapsed ? 'justify-center' : 'justify-between'}
+        `}
       >
-        {!isCollapsed && <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Menu</h2>}
+        {!isCollapsed && (
+          <h2 className="text-lg font-semibold m-0 text-[var(--text-primary)]">
+            Menu
+          </h2>
+        )}
         <button
           onClick={toggleSidebar}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "20px",
-            padding: "4px",
-          }}
+          className="bg-transparent border-none cursor-pointer text-xl p-1 text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
         >
           {isCollapsed ? "☰" : "✕"}
         </button>
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {routes.map((route) => renderMenuItem(route))}
       </nav>
     </div>

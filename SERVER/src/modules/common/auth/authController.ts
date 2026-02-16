@@ -1,6 +1,7 @@
 import { Request, Response as ExpressResponse } from 'express';
 import { Response } from '../../../utils';
 import { STATUS_CODE } from '../../../constants/appConstants';
+import CustomError from '../../../utils/CustomError';
 import { loginService } from './authService';
 
 export const loginController = async (req: Request, res: ExpressResponse) => {
@@ -14,8 +15,8 @@ export const loginController = async (req: Request, res: ExpressResponse) => {
     return Response({
       res,
       data: null,
-      message:err.message,
-      statusCode: STATUS_CODE.UNAUTHORIZED,
+      message: err.message,
+      statusCode: err instanceof CustomError ? err.statusCode : STATUS_CODE.INTERNAL_SERVER_ERROR,
     });
   }
 };

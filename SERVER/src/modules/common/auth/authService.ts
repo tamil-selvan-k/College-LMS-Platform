@@ -1,14 +1,14 @@
-import getAdminPrisma from '../../../config/adminPrisma';
-import getTenantConnection from '../../../config/tenantPool';
-import { comparePassword } from '../../../utils/bcryptUtil';
-import { generateToken } from '../../../utils/jwtUtil';
+import {getAdminPrisma, getTenantConnection} from '../../../config';
+import { comparePassword, generateToken } from '../../../utils';
+import CustomError from '../../../utils/CustomError';
+import { STATUS_CODE } from '../../../constants';
 
 export const loginService = async ({ email, password }: { email: string; password: string }) => {
 	// Extract college identifier from email domain
 	// Example: admin@sjit.com -> sjit
 	const emailParts = email.split('@');
 	if (emailParts.length !== 2) {
-		throw new Error('Invalid email format');
+		throw new CustomError({ message: 'Invalid email format', statusCode: STATUS_CODE.BAD_REQUEST });
 	}
 
 	const domain = emailParts[1]; // e.g., "sjit.com"
@@ -30,11 +30,11 @@ export const loginService = async ({ email, password }: { email: string; passwor
 	});
 
 	if (!tenant) {
-		throw new Error('College not found');
+		throw new CustomError({ message: 'College not found', statusCode: STATUS_CODE.NOT_FOUND });
 	}
 
 	if (!tenant.is_active) {
-		throw new Error('College account is inactive');
+		throw new CustomError({ message: 'College account is inactive', statusCode: STATUS_CODE.FORBIDDEN });
 	}
 
 	// Get tenant database connection from pool
@@ -47,21 +47,21 @@ export const loginService = async ({ email, password }: { email: string; passwor
 	});
 
 	if (!user) {
-		throw new Error('Invalid credentials');
+		throw new CustomError({ message: 'Invalid credentials', statusCode: STATUS_CODE.UNAUTHORIZED });
 	}
 
 	if (!user.password) {
-		throw new Error('User password not set');
+		throw new CustomError({ message: 'User password not set', statusCode: STATUS_CODE.UNAUTHORIZED });
 	}
 
 	const match = await comparePassword({ password, hashPassword: user.password });
 	if (!match) {
-		throw new Error('Invalid credentials');
+		throw new CustomError({ message: 'Invalid credentials', statusCode: STATUS_CODE.UNAUTHORIZED });
 	}
 
 	// Fetch permissions for the user's role
 	if (!user.role_id) {
-		throw new Error('User role not assigned');
+		throw new CustomError({ message: 'User role not assigned', statusCode: STATUS_CODE.FORBIDDEN });
 	}
 
 	const roleId = user.role_id;
@@ -99,11 +99,6 @@ export const loginService = async ({ email, password }: { email: string; passwor
 	return {
 		token,
 		permissions,
-		role: roleName,
-		college: {
-			id: tenant.id,
-			name: tenant.college_name,
-			code: tenant.uniq_string,
-		},
+		role: roleName
 	};
 };

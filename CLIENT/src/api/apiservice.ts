@@ -66,6 +66,7 @@ export const postApi = async (props: apiServiceType) => {
     });
 
     if (showToaster && response.data?.message) {
+      console.log(response.data.message);
       toasterHelper({ message: response.data.message, status: response.status });
     }
     return response.data;
