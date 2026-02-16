@@ -1,6 +1,9 @@
 // Tenant Validation Middleware
 // Validates college_id from JWT and injects tenant connection
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response as ExpressResponse, NextFunction } from 'express';
+import { Response } from '../utils/response';
+import { STATUS_CODE } from '../constants/appConstants';
+import logger from '../config/logger';
 import getAdminPrisma from '../config/adminPrisma';
 import getTenantConnection from '../config/tenantPool';
 
@@ -29,7 +32,7 @@ declare global {
  */
 export async function validateTenant(
   req: Request,
-  res: Response,
+  res: ExpressResponse,
   next: NextFunction
 ): Promise<void> {
   try {
@@ -37,8 +40,10 @@ export async function validateTenant(
     const college_id = req.user?.college_id;
 
     if (!college_id) {
-      res.status(401).json({
-        error: 'Unauthorized',
+      Response({
+        res,
+        data: null,
+        statusCode: STATUS_CODE.UNAUTHORIZED,
         message: 'College ID not found in token',
       });
       return;
@@ -62,8 +67,10 @@ export async function validateTenant(
     });
 
     if (!tenant) {
-      res.status(403).json({
-        error: 'Forbidden',
+      Response({
+        res,
+        data: null,
+        statusCode: STATUS_CODE.FORBIDDEN,
         message: 'College not found or inactive',
       });
       return;
@@ -82,9 +89,11 @@ export async function validateTenant(
 
     next();
   } catch (error) {
-    console.error('Tenant validation error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
+    logger.error('Tenant validation error:', error);
+    Response({
+      res,
+      data: null,
+      statusCode: STATUS_CODE.INTERNAL_SERVER_ERROR,
       message: 'Failed to validate tenant',
     });
   }

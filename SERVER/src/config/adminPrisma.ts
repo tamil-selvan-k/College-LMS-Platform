@@ -1,5 +1,8 @@
-// Admin Prisma Client - Singleton for lms_admin database
+// Admin Prisma Client (lms_admin database)
 import { PrismaClient as AdminPrismaClient } from '@prisma/admin-client';
+import logger from './logger';
+import dotenv from 'dotenv';
+dotenv.config()
 
 let adminPrisma: AdminPrismaClient | null = null;
 
@@ -23,7 +26,7 @@ export function getAdminPrisma(): AdminPrismaClient {
       log: process.env.NODE_ENV === 'DEV' ? ['error'] : ['error'],
     });
 
-    console.log('Admin database connected');
+    logger.info('Admin database connected');
   }
 
   return adminPrisma;

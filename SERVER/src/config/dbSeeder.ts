@@ -1,11 +1,35 @@
-import prisma from "./db";
-import { permissions } from "./../constants/permission";
-import { ADMIN_CREDENTIALS, USER_CREDENTIALS } from "./../constants/appConstants";
-import { hashPassword } from "./../utils/bcryptUtil";
+import { permissions } from "../constants/permission";
+import { ADMIN_CREDENTIALS, USER_CREDENTIALS } from "../constants/appConstants";
+import { hashPassword } from "../utils/bcryptUtil";
+import getAdminPrisma from "./adminPrisma";
+import getTenantConnection from "./tenantPool";
+import logger from "./logger";
 
-export async function seedPermissions(): Promise<void> {
+/**
+ * Multi-tenant seeder
+ * Pass uniq_string (e.g., 'sjit') to seed that tenant's database
+ */
+export async function seedPermissions(uniq_string: string): Promise<void> {
 	try {
-		const existing = await prisma.permissions.findMany({
+		// Get admin database connection
+		const adminPrisma = getAdminPrisma();
+
+		// Fetch tenant info from admin database
+		const tenant = await adminPrisma.tenants.findUnique({
+			where: { uniq_string },
+			select: { id: true, db_string: true, college_name: true },
+		});
+
+		if (!tenant) {
+			throw new Error(`Tenant with uniq_string '${uniq_string}' not found`);
+		}
+
+		logger.info(`Seeding permissions for: ${tenant.college_name}`);
+
+		// Get tenant database connection
+		const tenantPrisma = getTenantConnection(tenant.db_string, tenant.id);
+
+		const existing = await tenantPrisma.permissions.findMany({
 			where: { permission: { in: permissions as string[] } },
 			select: { permission: true },
 		});
@@ -14,49 +38,74 @@ export async function seedPermissions(): Promise<void> {
 		const missing = (permissions as string[]).filter((p) => !existingSet.has(p));
 
 		if (missing.length === 0) {
-			console.log("No new permissions to seed");
+			logger.info("No new permissions to seed");
 			return;
 		}
 
 		await Promise.all(
-			missing.map((p) => prisma.permissions.create({ data: { permission: p } }))
+			missing.map((p) => tenantPrisma.permissions.create({ data: { permission: p } }))
 		);
 
-		console.log(`Seeded ${missing.length} new permissions`);
+		logger.info(`Seeded ${missing.length} new permissions for ${tenant.college_name}`);
 	} catch (error) {
-		console.error("Failed to seed permissions:", error);
+		logger.error("Failed to seed permissions:", error);
 		throw error;
 	}
 }
 
-export async function seedCredentials(): Promise<void> {
-  try {
+export async function seedCredentials(uniq_string: string): Promise<void> {
+	try {
+		// Get admin database connection
+		const adminPrisma = getAdminPrisma();
+
+		// Fetch tenant info from admin database
+		const tenant = await adminPrisma.tenants.findUnique({
+			where: { uniq_string },
+			select: { id: true, db_string: true, college_name: true },
+		});
+
+		if (!tenant) {
+			throw new Error(`Tenant with uniq_string '${uniq_string}' not found`);
+		}
+
+		logger.info(`Seeding credentials for: ${tenant.college_name}`);
+
+		// Get tenant database connection
+		const tenantPrisma = getTenantConnection(tenant.db_string, tenant.id);
+
 		// ensure roles exist
 		const adminRoleName = "ADMIN";
 		const userRoleName = "STUDENT";
 
-		// use upsert to avoid race/sequence issues that can cause id conflicts
-		const adminRole = await prisma.roles.upsert({
+		// Find or create admin role
+		let adminRole = await tenantPrisma.roles.findFirst({
 			where: { role: adminRoleName },
-			update: {},
-			create: { role: adminRoleName },
 		});
-		console.log(`Ensured role: ${adminRoleName}`);
+		if (!adminRole) {
+			adminRole = await tenantPrisma.roles.create({
+				data: { role: adminRoleName },
+			});
+		}
+		logger.info(`Ensured role: ${adminRoleName}`);
 
-		const userRole = await prisma.roles.upsert({
+		// Find or create user role
+		let userRole = await tenantPrisma.roles.findFirst({
 			where: { role: userRoleName },
-			update: {},
-			create: { role: userRoleName },
 		});
-		console.log(`Ensured role: ${userRoleName}`);
+		if (!userRole) {
+			userRole = await tenantPrisma.roles.create({
+				data: { role: userRoleName },
+			});
+		}
+		logger.info(`Ensured role: ${userRoleName}`);
 
 		// admin
 		const adminEmail = ADMIN_CREDENTIALS.EMAIL;
 		const adminPasswordPlain = ADMIN_CREDENTIALS.PASSWORD;
-		const existingAdmin = await prisma.users.findUnique({ where: { email: adminEmail } });
+		const existingAdmin = await tenantPrisma.users.findUnique({ where: { email: adminEmail } });
 		if (!existingAdmin) {
 			const hashed = await hashPassword({ password: adminPasswordPlain });
-			await prisma.users.create({
+			await tenantPrisma.users.create({
 				data: {
 					name: "Admin",
 					email: adminEmail,
@@ -65,18 +114,18 @@ export async function seedCredentials(): Promise<void> {
 					is_super_admin: true,
 				},
 			});
-			console.log(`Seeded admin user: ${adminEmail}`);
+			logger.info(`Seeded admin user: ${adminEmail}`);
 		} else {
-			console.log(`Admin user already exists: ${adminEmail}`);
+			logger.info(`Admin user already exists: ${adminEmail}`);
 		}
 
 		// normal user
 		const userEmail = USER_CREDENTIALS.EMAIL;
 		const userPasswordPlain = USER_CREDENTIALS.PASSWORD;
-		const existingUser = await prisma.users.findUnique({ where: { email: userEmail } });
+		const existingUser = await tenantPrisma.users.findUnique({ where: { email: userEmail } });
 		if (!existingUser) {
 			const hashedUser = await hashPassword({ password: userPasswordPlain });
-			await prisma.users.create({
+			await tenantPrisma.users.create({
 				data: {
 					name: "User",
 					email: userEmail,
@@ -85,13 +134,14 @@ export async function seedCredentials(): Promise<void> {
 					is_super_admin: false,
 				},
 			});
-			console.log(`Seeded normal user: ${userEmail}`);
+			logger.info(`Seeded normal user: ${userEmail}`);
 		} else {
-			console.log(`Normal user already exists: ${userEmail}`);
+			logger.info(`Normal user already exists: ${userEmail}`);
 		}
 
-  } catch (error) {
-    console.error("Failed to seed permissions:", error);
+		logger.info(`✅ Seeding complete for ${tenant.college_name}`);
+	} catch (error) {
+		logger.error("Failed to seed credentials:", error);
 		throw error;
-  }
+	}
 }

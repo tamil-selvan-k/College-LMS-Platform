@@ -1,5 +1,6 @@
 // Tenant Connection Pool Manager
 import { PrismaClient as TenantPrismaClient } from '@prisma/tenant-client';
+import logger from './logger';
 
 interface PooledConnection {
   client: TenantPrismaClient;
@@ -54,7 +55,7 @@ export function getTenantConnection(db_string: string, college_id: number): Tena
     };
 
     pool.push(newConnection);
-    console.log(`✅ Created connection for college ${college_id}. Pool size: ${pool.length}/${MAX_CONNECTIONS_PER_TENANT}`);
+    logger.info(`✅ Created connection for college ${college_id}. Pool size: ${pool.length}/${MAX_CONNECTIONS_PER_TENANT}`);
     
     return client;
   }
@@ -85,7 +86,7 @@ function cleanupExpiredConnections(): void {
     });
 
     if (validConnections.length !== pool.length) {
-      console.log(`🧹 Cleaned ${pool.length - validConnections.length} expired connections for tenant`);
+      logger.info(`🧹 Cleaned ${pool.length - validConnections.length} expired connections for tenant`);
     }
 
     if (validConnections.length > 0) {

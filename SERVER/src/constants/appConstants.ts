@@ -12,11 +12,11 @@ export const STATUS_CODE: Record<string, number> = {
 
 
 export const ADMIN_CREDENTIALS: Record<string, string> = {
-  EMAIL: "admin@gmail.com",
+  EMAIL: "admin@sjit.com",
   PASSWORD: "root"
 }
 
 export const USER_CREDENTIALS: Record<string, string> = {
-  EMAIL: "user@gmail.com",
+  EMAIL: "user@sjit.com",
   PASSWORD: "root"
 }

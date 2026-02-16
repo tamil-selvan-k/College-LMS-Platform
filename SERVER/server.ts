@@ -37,8 +37,8 @@ const startServer = async () => {
   try {
     await connectDB();
     // seed required data before accepting requests
-    // await seedPermissions();
-    // await seedCredentials();
+    // await seedPermissions("sjit");
+    // await seedCredentials("sjit");
 
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);

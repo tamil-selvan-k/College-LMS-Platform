@@ -1,0 +1,6 @@
+{
+  "watch": ["dist"],
+  "ignore": ["logs", "*.log", "node_modules", ".git"],
+  "ext": "js",
+  "delay": "1000"
+}

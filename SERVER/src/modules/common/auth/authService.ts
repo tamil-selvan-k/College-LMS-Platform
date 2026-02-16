@@ -50,12 +50,20 @@ export const loginService = async ({ email, password }: { email: string; passwor
 		throw new Error('Invalid credentials');
 	}
 
+	if (!user.password) {
+		throw new Error('User password not set');
+	}
+
 	const match = await comparePassword({ password, hashPassword: user.password });
 	if (!match) {
 		throw new Error('Invalid credentials');
 	}
 
 	// Fetch permissions for the user's role
+	if (!user.role_id) {
+		throw new Error('User role not assigned');
+	}
+
 	const roleId = user.role_id;
 	const roleName = user.roles?.role ?? null;
 
