@@ -15,8 +15,8 @@ interface HasPermissionParams {
  * Service function to check if a user has a specific permission
  * Super admins automatically have all permissions
  */
-export const hasPermissionService = async ({ 
-  permission, 
+export const hasPermissionService = async ({
+  permission,
   prisma,
   userId,
   roleId,
@@ -47,15 +47,25 @@ export const hasPermissionService = async ({
   }
 
   // Check role-based permissions
+  // First, get the permission ID
+  const permissionRecord = await prisma.permissions.findFirst({
+    where: { permission: permission },
+    select: { id: true },
+  });
+
+  if (!permissionRecord) {
+    logger.warn(`Permission ${permission} not found in database`);
+    throw new CustomError({
+      message: `Permission ${permission} not found`,
+      statusCode: STATUS_CODE.FORBIDDEN,
+    });
+  }
+
+  // Check if role has this permission
   const rolePermission = await prisma.role_permissions.findFirst({
     where: {
       role: roleId,
-      permissions: {
-        permission: permission,
-      },
-    },
-    include: {
-      permissions: true,
+      permission: permissionRecord.id,
     },
   });
 

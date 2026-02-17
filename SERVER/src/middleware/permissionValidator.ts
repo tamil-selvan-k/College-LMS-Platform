@@ -44,15 +44,28 @@ export const checkPermission = (permission: string) => {
       }
 
       // Check if the user's role has the required permission
+      // First, get the permission ID
+      const permissionRecord = await req.tenantPrisma.permissions.findFirst({
+        where: { permission: permission },
+        select: { id: true },
+      });
+
+      if (!permissionRecord) {
+        logger.warn(`Permission ${permission} not found in database`);
+        Response({
+          res,
+          data: null,
+          statusCode: STATUS_CODE.FORBIDDEN,
+          message: `Permission ${permission} not found`,
+        });
+        return;
+      }
+
+      // Check if role has this permission
       const hasPermission = await req.tenantPrisma.role_permissions.findFirst({
         where: {
           role: req.user.roleId,
-          permissions: {
-            permission: permission,
-          },
-        },
-        include: {
-          permissions: true,
+          permission: permissionRecord.id,
         },
       });
 
@@ -71,7 +84,7 @@ export const checkPermission = (permission: string) => {
       next();
     } catch (error: any) {
       logger.error('Permission validation error:', error);
-      
+
       Response({
         res,
         data: null,

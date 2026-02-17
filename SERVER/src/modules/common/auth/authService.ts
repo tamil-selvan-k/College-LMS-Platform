@@ -1,4 +1,4 @@
-import {getAdminPrisma, getTenantConnection} from '../../../config';
+import { getAdminPrisma, getTenantConnection } from '../../../config';
 import { comparePassword, generateToken } from '../../../utils';
 import { CustomError } from '../../../utils';
 import { STATUS_CODE } from '../../../constants';
@@ -43,7 +43,6 @@ export const loginService = async ({ email, password }: { email: string; passwor
 	// Find user in tenant database
 	const user = await tenantPrisma.users.findUnique({
 		where: { email },
-		include: { roles: true },
 	});
 
 	if (!user) {
@@ -65,7 +64,13 @@ export const loginService = async ({ email, password }: { email: string; passwor
 	}
 
 	const roleId = user.role_id;
-	const roleName = user.roles?.role ?? null;
+
+	// Fetch role name
+	const role = await tenantPrisma.roles.findUnique({
+		where: { id: roleId },
+		select: { role: true },
+	});
+	const roleName = role?.role ?? null;
 
 	let permissions: string[] = [];
 
@@ -79,19 +84,26 @@ export const loginService = async ({ email, password }: { email: string; passwor
 	} else {
 		// Regular users get role-based permissions
 		const rolePerms = await tenantPrisma.role_permissions.findMany({
-			where: {
-				role: roleId,
-				permissions: { permission: { startsWith: 'LMS' } },
-			},
-			include: { permissions: true },
+			where: { role: roleId },
+			select: { permission: true },
 		});
 
-		permissions = rolePerms.map((rp: any) => rp.permissions.permission);
+		// Fetch permission details for LMS permissions only
+		const permissionIds = rolePerms.map((rp: { permission: number | null }) => rp.permission).filter(Boolean) as number[];
+		const permDetails = await tenantPrisma.permissions.findMany({
+			where: {
+				id: { in: permissionIds },
+				permission: { startsWith: 'LMS' },
+			},
+			select: { permission: true },
+		});
+
+		permissions = permDetails.map((p: any) => p.permission);
 	}
 
 	// Generate JWT token with user_id, role_id, college_id, and is_super_admin
-	const token = generateToken({ 
-		userId: user.id, 
+	const token = generateToken({
+		userId: user.id,
 		roleId: user.role_id,
 		collegeId: tenant.id,
 		isSuperAdmin: user.is_super_admin ?? false,

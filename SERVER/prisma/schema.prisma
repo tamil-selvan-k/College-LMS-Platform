@@ -1,4 +1,3 @@
-// Tenant Database Schema
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/@prisma/tenant-client"
@@ -9,7 +8,325 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums
+model action_logs {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  action      String    @db.VarChar
+  target_type String?   @db.VarChar
+  target_id   Int?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model batches {
+  id         Int    @id @default(autoincrement())
+  batch_year String @unique @db.VarChar
+}
+
+model bus_stops {
+  id       Int                       @id @default(autoincrement())
+  name     String?                   @db.VarChar(255)
+  location Unsupported("geography")?
+}
+
+model categories {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model colleges {
+  id           Int     @id @default(autoincrement())
+  college_code Int?    @unique
+  name         String? @db.VarChar
+}
+
+model departments {
+  id              Int     @id @default(autoincrement())
+  name            String? @db.VarChar
+  department_code String? @db.VarChar
+  college_id      Int?
+}
+
+model login_logs {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  ip_address String?   @db.VarChar
+  status     String?   @db.VarChar
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model mcq_attempt_answers {
+  test_attempt_id     Int
+  mcq_question_id     Int
+  selected_option_ids Int[]    @default([])
+  marks_awarded       Decimal? @db.Decimal(10, 2)
+
+  @@id([test_attempt_id, mcq_question_id])
+}
+
+model mcq_options {
+  id              Int      @id @default(autoincrement())
+  mcq_question_id Int
+  option_text     String   @db.VarChar
+  is_correct      Boolean? @default(false)
+}
+
+model mcq_question_tags {
+  mcq_question_id Int
+  tag_id          Int
+
+  @@id([mcq_question_id, tag_id])
+}
+
+model mcq_questions {
+  id            Int                     @id @default(autoincrement())
+  question      String
+  question_type mcq_question_type_enum?
+  max_marks     Decimal?                @default(1) @db.Decimal(10, 2)
+  created_by    Int?
+  created_at    DateTime?               @default(now()) @db.Timestamp(6)
+  category_id   Int?
+}
+
+model modules {
+  id          Int      @id @default(autoincrement())
+  parent_id   Int?
+  name        String?  @db.VarChar
+  order_index Int?
+  is_leaf     Boolean?
+  created_by  Int?
+}
+
+model permissions {
+  id         Int     @id @default(autoincrement())
+  permission String? @db.VarChar
+}
+
+model placement {
+  id             Int     @id @default(autoincrement())
+  placement_name String? @unique @db.VarChar
+  department_id  Int?
+}
+
+model problem_tags {
+  problem_id Int
+  tag_id     Int
+
+  @@id([problem_id, tag_id])
+}
+
+model problems {
+  id            Int              @id @default(autoincrement())
+  module_id     Int?
+  title         String?          @db.VarChar
+  description   String?
+  difficulty    difficulty_enum?
+  order_index   Int?
+  created_by    Int?
+  is_published  Boolean?
+  category_id   Int?
+  test_problems test_problems[]
+}
+
+model programming_language {
+  id       Int     @id @default(autoincrement())
+  language String? @db.VarChar
+}
+
+model role_permissions {
+  id         Int  @id @default(autoincrement())
+  role       Int?
+  permission Int?
+}
+
+model roles {
+  id   Int     @id @default(autoincrement())
+  role String? @db.VarChar
+}
+
+model student_platform_profiles {
+  id         Int     @id @default(autoincrement())
+  student_id Int     @unique
+  leetcode   String? @db.VarChar
+  hackerrank String? @db.VarChar
+  codeforces String? @db.VarChar
+  atcoder    String? @db.VarChar
+  skillrack  String? @db.VarChar
+  codechef   String? @db.VarChar
+}
+
+model student_profiles {
+  id        Int  @id @default(autoincrement())
+  user_id   Int  @unique
+  batch_id  Int?
+  mentor_id Int?
+}
+
+model submissions {
+  id              Int                     @id @default(autoincrement())
+  user_id         Int?
+  problem_id      Int?
+  language_id     Int?
+  ip_address      String?                 @db.VarChar
+  code            String?
+  status          submission_status_enum?
+  runtime         Int?
+  memory          Int?
+  test_attempt_id Int?
+  created_at      DateTime?               @default(now()) @db.Timestamp(6)
+}
+
+model tags {
+  id          Int    @id @default(autoincrement())
+  name        String @unique @db.VarChar
+  category_id Int?
+}
+
+model test_attempt_malpractice {
+  id         Int       @id @default(autoincrement())
+  attempt_id Int?
+  type       String?   @db.VarChar(50)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model test_attempts {
+  id                  Int                       @id @default(autoincrement())
+  test_id             Int?
+  user_id             Int?
+  start_time          DateTime?                 @db.Timestamp(6)
+  end_time            DateTime?                 @db.Timestamp(6)
+  count               Int?
+  status              test_attempt_status_enum?
+  total_marks         Decimal?                  @db.Decimal(10, 2)
+  max_marks           Decimal?                  @db.Decimal(10, 2)
+  navigation_override Int?                      @default(0)
+}
+
+model test_mcq_questions {
+  test_id         Int
+  mcq_question_id Int
+  order_index     Int? @default(0)
+
+  @@id([test_id, mcq_question_id])
+}
+
+model test_problems {
+  test_id    Int
+  problem_id Int
+  problems   problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  tests      tests    @relation(fields: [test_id], references: [id], onDelete: Cascade)
+
+  @@id([test_id, problem_id])
+}
+
+model test_target_batches {
+  test_id  Int
+  batch_id Int
+
+  @@id([test_id, batch_id])
+}
+
+model test_target_departments {
+  test_id       Int
+  department_id Int
+
+  @@id([test_id, department_id])
+}
+
+model test_target_placements {
+  test_id      Int
+  placement_id Int
+
+  @@id([test_id, placement_id])
+}
+
+model testcases {
+  id         Int      @id @default(autoincrement())
+  problem_id Int?
+  input      String?
+  output     String?
+  is_sample  Boolean?
+}
+
+model tests {
+  id                Int               @id @default(autoincrement())
+  name              String?           @db.VarChar
+  batch_id          Int?
+  college_id        Int?
+  start_time        DateTime?         @db.Timestamp(6)
+  end_time          DateTime?         @db.Timestamp(6)
+  status            test_status_enum?
+  created_by        Int?
+  test_type         test_type_enum?
+  results_published Boolean?          @default(false)
+  max_navigations   Int?              @default(3)
+  duration_minutes  Int?              @default(60)
+  test_problems     test_problems[]
+}
+
+model user_permissions {
+  user_id       Int
+  permission_id Int
+
+  @@id([user_id, permission_id])
+}
+
+model users {
+  id               Int              @id @default(autoincrement())
+  name             String?          @db.VarChar
+  email            String           @unique @db.VarChar
+  password         String?          @db.VarChar
+  phone            String?          @db.VarChar
+  registration_no  String?          @db.VarChar
+  role_id          Int?
+  college_id       Int?
+  department_id    Int?
+  placement_id     Int?
+  roll_number      String?          @db.VarChar
+  staff_id         String?          @db.VarChar
+  created_at       DateTime?        @default(now()) @db.Timestamp(6)
+  last_login       DateTime?        @db.Timestamp(6)
+  is_super_admin   Boolean?         @default(false)
+  coins            Int?             @default(0)
+  streak           Int?             @default(0)
+  last_solved_date DateTime?        @db.Timestamp(6)
+  github_id        String?          @db.VarChar
+  github_username  String?          @db.VarChar
+  user_purchases   user_purchases[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+model store_items {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar(255)
+  description    String?
+  cost           Int
+  image_url      String?
+  type           String?          @default("STORE_ITEM") @db.VarChar(50)
+  is_active      Boolean?         @default(true)
+  created_at     DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?        @default(now()) @db.Timestamp(6)
+  user_purchases user_purchases[]
+}
+
+model user_purchases {
+  id           Int         @id @default(autoincrement())
+  user_id      Int
+  item_id      Int
+  purchased_at DateTime?   @default(now()) @db.Timestamp(6)
+  status       String?     @default("COMPLETED") @db.VarChar(50)
+  store_items  store_items @relation(fields: [item_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
 enum difficulty_enum {
   EASY
   MEDIUM
@@ -45,384 +362,7 @@ enum mcq_question_type_enum {
   MULTIPLE_CHOICE
 }
 
-// Models
-model action_logs {
-  id          Int       @id @default(autoincrement())
-  user_id     Int
-  action      String    @db.VarChar
-  target_type String?   @db.VarChar
-  target_id   Int?
-  created_at  DateTime? @default(now()) @db.Timestamp(6)
-  users       users     @relation(fields: [user_id], references: [id])
-}
-
-model batches {
-  id                   Int                    @id @default(autoincrement())
-  batch_year           String                 @unique @db.VarChar
-  student_profiles     student_profiles[]
-  test_target_batches  test_target_batches[]
-  tests                tests[]
-}
-
-model bus_stops {
-  id       Int                                        @id @default(autoincrement())
-  name     String?                                    @db.VarChar(255)
-  location Unsupported("geography(Point,4326)")?
-}
-
-model categories {
-  id            Int             @id @default(autoincrement())
-  name          String          @db.VarChar
-  created_at    DateTime?       @default(now()) @db.Timestamp(6)
-  mcq_questions mcq_questions[]
-  problems      problems[]
-  tags          tags[]
-}
-
-model colleges {
-  id           Int           @id @default(autoincrement())
-  college_code Int?          @unique
-  name         String?       @db.VarChar
-  departments  departments[]
-  tests        tests[]
-  users        users[]
-}
-
-model departments {
-  id                      Int                       @id @default(autoincrement())
-  name                    String?                   @db.VarChar
-  department_code         String?                   @db.VarChar
-  college_id              Int?
-  colleges                colleges?                 @relation(fields: [college_id], references: [id])
-  placement               placement[]
-  test_target_departments test_target_departments[]
-  users                   users[]
-}
-
-model login_logs {
-  id         Int       @id @default(autoincrement())
-  user_id    Int
-  ip_address String?   @db.VarChar
-  status     String?   @db.VarChar
-  created_at DateTime? @default(now()) @db.Timestamp(6)
-  users      users     @relation(fields: [user_id], references: [id])
-}
-
-model mcq_attempt_answers {
-  test_attempt_id   Int
-  mcq_question_id   Int
-  selected_option_ids Int[]           @default([])
-  marks_awarded     Decimal?        @db.Decimal(10, 2)
-  mcq_questions     mcq_questions   @relation(fields: [mcq_question_id], references: [id], onDelete: Cascade)
-  test_attempts     test_attempts   @relation(fields: [test_attempt_id], references: [id], onDelete: Cascade)
-
-  @@id([test_attempt_id, mcq_question_id])
-}
-
-model mcq_options {
-  id              Int           @id @default(autoincrement())
-  mcq_question_id Int
-  option_text     String        @db.VarChar
-  is_correct      Boolean?      @default(false)
-  mcq_questions   mcq_questions @relation(fields: [mcq_question_id], references: [id], onDelete: Cascade)
-}
-
-model mcq_question_tags {
-  mcq_question_id Int
-  tag_id          Int
-  mcq_questions   mcq_questions @relation(fields: [mcq_question_id], references: [id], onDelete: Cascade)
-  tags            tags          @relation(fields: [tag_id], references: [id], onDelete: Cascade)
-
-  @@id([mcq_question_id, tag_id])
-}
-
-model mcq_questions {
-  id                  Int                   @id @default(autoincrement())
-  question            String
-  question_type       mcq_question_type_enum?
-  max_marks           Decimal?              @default(1) @db.Decimal(10, 2)
-  created_by          Int?
-  created_at          DateTime?             @default(now()) @db.Timestamp(6)
-  category_id         Int?
-  mcq_attempt_answers mcq_attempt_answers[]
-  mcq_options         mcq_options[]
-  mcq_question_tags   mcq_question_tags[]
-  categories          categories?           @relation(fields: [category_id], references: [id])
-  users               users?                @relation(fields: [created_by], references: [id])
-  test_mcq_questions  test_mcq_questions[]
-}
-
-model modules {
-  id            Int        @id @default(autoincrement())
-  parent_id     Int?
-  name          String?    @db.VarChar
-  order_index   Int?
-  is_leaf       Boolean?
-  created_by    Int?
-  users         users?     @relation(fields: [created_by], references: [id])
-  modules       modules?   @relation("modulesTomodules", fields: [parent_id], references: [id])
-  other_modules modules[]  @relation("modulesTomodules")
-  problems      problems[]
-}
-
-model permissions {
-  id               Int                @id @default(autoincrement())
-  permission       String?            @db.VarChar
-  role_permissions role_permissions[]
-  user_permissions user_permissions[]
-}
-
-model placement {
-  id                     Int                      @id @default(autoincrement())
-  placement_name         String?                  @unique @db.VarChar
-  department_id          Int?
-  departments            departments?             @relation(fields: [department_id], references: [id])
-  test_target_placements test_target_placements[]
-  users                  users[]
-}
-
-model problem_tags {
-  problem_id Int
-  tag_id     Int
-  problems   problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-  tags       tags     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
-
-  @@id([problem_id, tag_id])
-}
-
-model problems {
-  id           Int              @id @default(autoincrement())
-  module_id    Int?
-  title        String?          @db.VarChar
-  description  String?
-  difficulty   difficulty_enum?
-  order_index  Int?
-  created_by   Int?
-  is_published Boolean?
-  category_id  Int?
-  problem_tags problem_tags[]
-  categories   categories?      @relation(fields: [category_id], references: [id])
-  users        users?           @relation(fields: [created_by], references: [id])
-  modules      modules?         @relation(fields: [module_id], references: [id])
-  submissions  submissions[]
-  test_problems test_problems[]
-  testcases    testcases[]
-}
-
-model programming_language {
-  id          Int           @id @default(autoincrement())
-  language    String?       @db.VarChar
-  submissions submissions[]
-}
-
-model role_permissions {
-  id          Int         @id @default(autoincrement())
-  role        Int?
-  permission  Int?
-  permissions permissions? @relation(fields: [permission], references: [id])
-  roles       roles?      @relation(fields: [role], references: [id])
-}
-
-model roles {
-  id               Int                @id @default(autoincrement())
-  role             String?            @db.VarChar
-  role_permissions role_permissions[]
-  users            users[]
-}
-
-model student_platform_profiles {
-  id         Int    @id @default(autoincrement())
-  student_id Int    @unique
-  leetcode   String? @db.VarChar
-  hackerrank String? @db.VarChar
-  codeforces String? @db.VarChar
-  atcoder    String? @db.VarChar
-  skillrack  String? @db.VarChar
-  codechef   String? @db.VarChar
-  users      users  @relation(fields: [student_id], references: [id], onDelete: Cascade)
-}
-
-model student_profiles {
-  id        Int     @id @default(autoincrement())
-  user_id   Int     @unique
-  batch_id  Int?
-  mentor_id Int?
-  batches   batches? @relation(fields: [batch_id], references: [id])
-  users_student_profiles_mentor_idTousers users?  @relation("student_profiles_mentor_idTousers", fields: [mentor_id], references: [id])
-  users_student_profiles_user_idTousers   users   @relation("student_profiles_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade)
-}
-
-model submissions {
-  id                   Int                    @id @default(autoincrement())
-  user_id              Int?
-  problem_id           Int?
-  language_id          Int?
-  ip_address           String?                @db.VarChar
-  code                 String?
-  status               submission_status_enum?
-  runtime              Int?
-  memory               Int?
-  test_attempt_id      Int?
-  created_at           DateTime?              @default(now()) @db.Timestamp(6)
-  programming_language programming_language?  @relation(fields: [language_id], references: [id])
-  problems             problems?              @relation(fields: [problem_id], references: [id])
-  test_attempts        test_attempts?         @relation(fields: [test_attempt_id], references: [id])
-  users                users?                 @relation(fields: [user_id], references: [id])
-}
-
-model tags {
-  id                Int                 @id @default(autoincrement())
-  name              String              @unique @db.VarChar
-  category_id       Int?
-  mcq_question_tags mcq_question_tags[]
-  problem_tags      problem_tags[]
-  categories        categories?         @relation(fields: [category_id], references: [id])
-}
-
-model test_attempt_malpractice {
-  id            Int           @id @default(autoincrement())
-  attempt_id    Int?
-  type          String?       @db.VarChar(50)
-  created_at    DateTime?     @default(now()) @db.Timestamp(6)
-  test_attempts test_attempts? @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
-}
-
-model test_attempts {
-  id                       Int                        @id @default(autoincrement())
-  test_id                  Int?
-  user_id                  Int?
-  start_time               DateTime?                  @db.Timestamp(6)
-  end_time                 DateTime?                  @db.Timestamp(6)
-  count                    Int?
-  status                   test_attempt_status_enum?
-  total_marks              Decimal?                   @db.Decimal(10, 2)
-  max_marks                Decimal?                   @db.Decimal(10, 2)
-  navigation_override      Int?                       @default(0)
-  mcq_attempt_answers      mcq_attempt_answers[]
-  submissions              submissions[]
-  test_attempt_malpractice test_attempt_malpractice[]
-  tests                    tests?                     @relation(fields: [test_id], references: [id])
-  users                    users?                     @relation(fields: [user_id], references: [id])
-}
-
-model test_mcq_questions {
-  test_id         Int
-  mcq_question_id Int
-  order_index     Int?          @default(0)
-  mcq_questions   mcq_questions @relation(fields: [mcq_question_id], references: [id], onDelete: Cascade)
-  tests           tests         @relation(fields: [test_id], references: [id], onDelete: Cascade)
-
-  @@id([test_id, mcq_question_id])
-}
-
-model test_problems {
-  test_id    Int
-  problem_id Int
-  problems   problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-  tests      tests    @relation(fields: [test_id], references: [id], onDelete: Cascade)
-
-  @@id([test_id, problem_id])
-}
-
-model test_target_batches {
-  test_id  Int
-  batch_id Int
-  batches  batches @relation(fields: [batch_id], references: [id])
-  tests    tests   @relation(fields: [test_id], references: [id], onDelete: Cascade)
-
-  @@id([test_id, batch_id])
-}
-
-model test_target_departments {
-  test_id       Int
-  department_id Int
-  departments   departments @relation(fields: [department_id], references: [id])
-  tests         tests       @relation(fields: [test_id], references: [id], onDelete: Cascade)
-
-  @@id([test_id, department_id])
-}
-
-model test_target_placements {
-  test_id      Int
-  placement_id Int
-  placement    placement @relation(fields: [placement_id], references: [id])
-  tests        tests     @relation(fields: [test_id], references: [id], onDelete: Cascade)
-
-  @@id([test_id, placement_id])
-}
-
-model testcases {
-  id         Int      @id @default(autoincrement())
-  problem_id Int?
-  input      String?
-  output     String?
-  is_sample  Boolean?
-  problems   problems? @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-}
-
-model tests {
-  id                      Int                       @id @default(autoincrement())
-  name                    String?                   @db.VarChar
-  batch_id                Int?
-  college_id              Int?
-  start_time              DateTime?                 @db.Timestamp(6)
-  end_time                DateTime?                 @db.Timestamp(6)
-  status                  test_status_enum?
-  created_by              Int?
-  test_type               test_type_enum?
-  results_published       Boolean?                  @default(false)
-  max_navigations         Int?                      @default(3)
-  duration_minutes        Int?                      @default(60)
-  test_attempts           test_attempts[]
-  test_mcq_questions      test_mcq_questions[]
-  test_problems           test_problems[]
-  test_target_batches     test_target_batches[]
-  test_target_departments test_target_departments[]
-  test_target_placements  test_target_placements[]
-  batches                 batches?                  @relation(fields: [batch_id], references: [id])
-  colleges                colleges?                 @relation(fields: [college_id], references: [id])
-  users                   users?                    @relation(fields: [created_by], references: [id])
-}
-
-model user_permissions {
-  user_id       Int
-  permission_id Int
-  permissions   permissions @relation(fields: [permission_id], references: [id])
-  users         users       @relation(fields: [user_id], references: [id])
-
-  @@id([user_id, permission_id])
-}
-
-model users {
-  id                                              Int                         @id @default(autoincrement())
-  name                                            String?                     @db.VarChar
-  email                                           String                      @unique @db.VarChar
-  password                                        String?                     @db.VarChar
-  phone                                           String?                     @db.VarChar
-  registration_no                                 String?                     @db.VarChar
-  role_id                                         Int?
-  is_super_admin                                  Boolean?                    @default(false)
-  college_id                                      Int?
-  department_id                                   Int?
-  placement_id                                    Int?
-  roll_number                                     String?                     @db.VarChar
-  staff_id                                        String?                     @db.VarChar
-  created_at                                      DateTime?                   @default(now()) @db.Timestamp(6)
-  last_login                                      DateTime?                   @db.Timestamp(6)
-  action_logs                                     action_logs[]
-  login_logs                                      login_logs[]
-  mcq_questions                                   mcq_questions[]
-  modules                                         modules[]
-  problems                                        problems[]
-  student_platform_profiles                       student_platform_profiles?
-  student_profiles_student_profiles_mentor_idTousers student_profiles[]      @relation("student_profiles_mentor_idTousers")
-  student_profiles_student_profiles_user_idTousers   student_profiles?       @relation("student_profiles_user_idTousers")
-  submissions                                     submissions[]
-  test_attempts                                   test_attempts[]
-  tests                                           tests[]
-  user_permissions                                user_permissions[]
-  colleges                                        colleges?                   @relation(fields: [college_id], references: [id])
-  departments                                     departments?                @relation(fields: [department_id], references: [id])
-  placement                                       placement?                  @relation(fields: [placement_id], references: [id])
-  roles                                           roles?                      @relation(fields: [role_id], references: [id])
+enum login_status_enum {
+  SUCCESS
+  FAILURE
 }
