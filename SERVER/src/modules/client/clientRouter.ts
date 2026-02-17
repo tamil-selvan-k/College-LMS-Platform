@@ -29,7 +29,7 @@ router.get(
 )
 
 router.post(
-  "/rewards/purchase-reward",
+  "/rewards/purchase/:id",
   validateJWT,
   validateTenant,
   buyRewardController,

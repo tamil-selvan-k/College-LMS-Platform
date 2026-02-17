@@ -148,7 +148,7 @@ export const getRewardByIdController = async (req: Request, res: ExpressResponse
 export const buyRewardController = async (req: Request, res: ExpressResponse) => {
     try {
         const prisma = req.tenantPrisma;
-        const { rewardId } = req.body;
+        const rewardId = req.params.id;
 
         const userId = req.body.userId || req.user?.userId;
 

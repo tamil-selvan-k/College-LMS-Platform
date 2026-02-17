@@ -171,7 +171,6 @@ export const buyRewardService = async ({ prisma, userId, rewardId }: { prisma: T
         }
 
         if ((user.coins || 0) < reward.coins) {
-            console.log(`User ${userId} has insufficient coins: ${user.coins}, required: ${reward.coins}`);
             throw new CustomError({ message: "Insufficient coins", statusCode: STATUS_CODE.BAD_REQUEST });
         }
 
